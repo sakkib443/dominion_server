@@ -14,6 +14,7 @@ import { ProductRoutes } from './app/modules/product/product.routes';
 import { OrderRoutes } from './app/modules/order/order.routes';
 import { ReviewRoutes } from './app/modules/review/review.routes';
 import { CouponRoutes } from './app/modules/coupon/coupon.routes';
+import { SearchRoutes } from './app/modules/search/search.routes';
 
 const app: Application = express();
 
@@ -66,6 +67,7 @@ app.use('/api/products', ProductRoutes);
 app.use('/api/orders', OrderRoutes);
 app.use('/api/reviews', ReviewRoutes);
 app.use('/api/coupons', CouponRoutes);
+app.use('/api/search', SearchRoutes);
 
 // ── Error Handlers ────────────────────────────────────────────────
 app.use(notFoundHandler);
