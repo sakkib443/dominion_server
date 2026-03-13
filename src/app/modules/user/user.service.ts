@@ -1,4 +1,6 @@
 import { User } from './user.model';
+import { Product } from '../product/product.model';
+import { Order } from '../order/order.model';
 import AppError from '../../utils/AppError';
 import QueryBuilder from '../../utils/QueryBuilder';
 
@@ -19,6 +21,22 @@ const UserService = {
         return { users, meta };
     },
 
+    // Admin stats
+    async getAdminStats() {
+        const [total, active, blocked, admins] = await Promise.all([
+            User.countDocuments(),
+            User.countDocuments({ status: 'active' }),
+            User.countDocuments({ status: 'blocked' }),
+            User.countDocuments({ role: 'admin' }),
+        ]);
+
+        const newUsersThisMonth = await User.countDocuments({
+            createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+        });
+
+        return { total, active, blocked, admins, users: total - admins, newUsersThisMonth };
+    },
+
     // Get single user
     async getUserById(id: string) {
         const user = await User.findById(id);
@@ -34,10 +52,58 @@ const UserService = {
     },
 
     // Update my profile
-    async updateMyProfile(userId: string, payload: Partial<{ firstName: string; lastName: string; phone: string; avatar: string }>) {
-        const user = await User.findByIdAndUpdate(userId, payload, { new: true, runValidators: true });
+    async updateMyProfile(userId: string, payload: any) {
+        // If password change is requested
+        if (payload.currentPassword && payload.password) {
+            const user = await User.findById(userId).select('+password');
+            if (!user) throw new AppError(404, 'User not found');
+
+            const isMatch = await user.comparePassword(payload.currentPassword);
+            if (!isMatch) throw new AppError(400, 'Current password is incorrect');
+
+            user.password = payload.password;
+            await user.save();
+            return user;
+        }
+
+        // Normal profile update
+        const allowedFields: Record<string, any> = {};
+        const allowed = ['firstName', 'lastName', 'phone', 'avatar', 'name'];
+        for (const key of allowed) {
+            if (payload[key] !== undefined) {
+                // Map 'name' to firstName/lastName
+                if (key === 'name' && typeof payload.name === 'string') {
+                    const parts = payload.name.trim().split(' ');
+                    allowedFields.firstName = parts[0];
+                    allowedFields.lastName = parts.slice(1).join(' ') || '';
+                } else {
+                    allowedFields[key] = payload[key];
+                }
+            }
+        }
+
+        const user = await User.findByIdAndUpdate(userId, allowedFields, { new: true, runValidators: true });
         if (!user) throw new AppError(404, 'User not found');
         return user;
+    },
+
+    // Admin: update user
+    async adminUpdateUser(id: string, payload: any) {
+        const allowedFields: Record<string, any> = {};
+        const allowed = ['firstName', 'lastName', 'phone', 'role', 'status', 'isEmailVerified'];
+        for (const key of allowed) {
+            if (payload[key] !== undefined) allowedFields[key] = payload[key];
+        }
+        const user = await User.findByIdAndUpdate(id, allowedFields, { new: true, runValidators: true });
+        if (!user) throw new AppError(404, 'User not found');
+        return user;
+    },
+
+    // Get my addresses
+    async getMyAddresses(userId: string) {
+        const user = await User.findById(userId);
+        if (!user) throw new AppError(404, 'User not found');
+        return user.shippingAddresses;
     },
 
     // Add shipping address
@@ -48,6 +114,11 @@ const UserService = {
         // If new address is default, remove default from others
         if (address.isDefault) {
             user.shippingAddresses.forEach((addr) => (addr.isDefault = false));
+        }
+
+        // Map 'zipCode' to 'postalCode' if sent from frontend
+        if (address.zipCode && !address.postalCode) {
+            address.postalCode = address.zipCode;
         }
 
         user.shippingAddresses.push(address);
@@ -67,6 +138,11 @@ const UserService = {
             user.shippingAddresses.forEach((addr) => (addr.isDefault = false));
         }
 
+        // Map zipCode to postalCode
+        if (payload.zipCode && !payload.postalCode) {
+            payload.postalCode = payload.zipCode;
+        }
+
         Object.assign(address, payload);
         await user.save();
         return user.shippingAddresses;
@@ -83,7 +159,18 @@ const UserService = {
         return user.shippingAddresses;
     },
 
-    // Add to wishlist
+    // Get wishlist (populated with products)
+    async getWishlist(userId: string) {
+        const user = await User.findById(userId).populate({
+            path: 'wishlist',
+            select: 'name images price discountPrice stock averageRating totalReviews slug',
+            match: { isDeleted: false },
+        });
+        if (!user) throw new AppError(404, 'User not found');
+        return user.wishlist;
+    },
+
+    // Toggle wishlist
     async toggleWishlist(userId: string, productId: string) {
         const user = await User.findById(userId);
         if (!user) throw new AppError(404, 'User not found');

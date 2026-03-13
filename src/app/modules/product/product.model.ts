@@ -4,6 +4,19 @@ const specificationSchema = new Schema({
     key: { type: String }, value: { type: String },
 }, { _id: false });
 
+const warrantySchema = new Schema({
+    hasWarranty: { type: Boolean, default: false },
+    duration: { type: Number, default: 0 },
+    durationUnit: { type: String, enum: ['days', 'months', 'years'], default: 'months' },
+    type: { type: String, enum: ['manufacturer', 'seller', 'brand', ''], default: 'manufacturer' },
+}, { _id: false });
+
+const shippingConfigSchema = new Schema({
+    freeShipping: { type: Boolean, default: false },
+    shippingCost: { type: Number, default: 0 },
+    estimatedDays: { type: Number, default: 3 },
+}, { _id: false });
+
 const productSchema = new Schema(
     {
         // ── Basic Info ──────────────────────────────────────────
@@ -16,6 +29,7 @@ const productSchema = new Schema(
         // ── Pricing ─────────────────────────────────────────────
         price: { type: Number, required: [true, 'Price is required'], min: 0 },
         originalPrice: { type: Number, default: null },
+        costPrice: { type: Number, default: null },
         discount: { type: Number, default: 0, min: 0, max: 100 }, // percentage
 
         // ── Images ──────────────────────────────────────────────
@@ -29,13 +43,21 @@ const productSchema = new Schema(
 
         // ── Stock ────────────────────────────────────────────────
         stock: { type: Number, default: 0, min: 0 },
+        lowStockThreshold: { type: Number, default: 5 },
         unit: { type: String, default: 'piece' },
         status: {
             type: String,
             enum: { values: ['active', 'draft', 'out-of-stock'], message: '{VALUE} is not valid' },
             default: 'active',
         },
+        visibility: {
+            type: String,
+            enum: { values: ['visible', 'hidden'], message: '{VALUE} is not valid' },
+            default: 'visible',
+        },
         isFeatured: { type: Boolean, default: false },
+        isNewProduct: { type: Boolean, default: true },
+        isOnSale: { type: Boolean, default: false },
         isDeleted: { type: Boolean, default: false },
 
         // ── 🔍 IMAGE SEARCH FIELDS ───────────────────────────────
@@ -43,6 +65,8 @@ const productSchema = new Schema(
         tags: { type: [String], default: [] },          // ['sneaker', 'running', 'sport']
         colors: { type: [String], default: [] },        // ['red', 'white', 'black']
         colorHex: { type: [String], default: [] },      // ['#FF0000', '#FFFFFF']
+        sizes: { type: [String], default: [] },          // ['S', 'M', 'L', 'XL', 'XXL']
+        weights: { type: [String], default: [] },        // ['100g', '250g', '500g', '1kg']
         material: { type: [String], default: [] },      // ['leather', 'mesh', 'cotton']
         pattern: { type: String, default: '' },         // 'solid', 'striped', 'floral', 'camo'
         gender: {
@@ -52,8 +76,9 @@ const productSchema = new Schema(
         },
         aiLabels: { type: [String], default: [] },      // AI-generated: ['shoe', 'footwear', 'athletic']
 
-        // ── Specifications ────────────────────────────────────────
+        // ── Specifications & Highlights ────────────────────────────
         specifications: { type: [specificationSchema], default: [] },
+        highlights: { type: [String], default: [] },
 
         // ── Shipping ──────────────────────────────────────────────
         weight: { type: Number, default: 0 },           // in grams
@@ -62,6 +87,10 @@ const productSchema = new Schema(
             width: { type: Number, default: 0 },
             height: { type: Number, default: 0 },
         },
+        shippingConfig: { type: shippingConfigSchema, default: () => ({}) },
+
+        // ── Warranty ──────────────────────────────────────────────
+        warranty: { type: warrantySchema, default: () => ({}) },
 
         // ── SEO ───────────────────────────────────────────────────
         metaTitle: { type: String, default: '' },
@@ -99,6 +128,11 @@ productSchema.virtual('discountedPrice').get(function () {
         return this.price - (this.price * this.discount) / 100;
     }
     return this.price;
+});
+
+// ── soldCount virtual (alias for totalSold) ────────────────
+productSchema.virtual('soldCount').get(function () {
+    return this.totalSold || 0;
 });
 
 // ── Pre-save: Auto slug + SKU ──────────────────────────────

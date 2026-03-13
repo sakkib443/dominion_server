@@ -30,6 +30,16 @@ const OrderController = {
         sendResponse(res, { statusCode: 200, success: true, message: 'Order status updated', data: order });
     }),
 
+    updatePaymentStatus: catchAsync(async (req: Request, res: Response) => {
+        const order = await OrderService.updatePaymentStatus(req.params.id, req.body.paymentStatus);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Payment status updated', data: order });
+    }),
+
+    addNote: catchAsync(async (req: Request, res: Response) => {
+        const order = await OrderService.addAdminNote(req.params.id, req.body.note);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Note added', data: order });
+    }),
+
     cancel: catchAsync(async (req: Request, res: Response) => {
         const order = await OrderService.cancelOrder(req.params.id, req.user!.userId);
         sendResponse(res, { statusCode: 200, success: true, message: 'Order cancelled', data: order });

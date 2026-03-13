@@ -144,6 +144,28 @@ const OrderService = {
         return order;
     },
 
+    async updatePaymentStatus(id: string, paymentStatus: string) {
+        const order = await Order.findById(id);
+        if (!order) throw new AppError(404, 'Order not found');
+
+        order.paymentStatus = paymentStatus as any;
+        if (paymentStatus === 'paid') {
+            order.transactionId = order.transactionId || `PAY-${Date.now()}`;
+        }
+        order.timeline.push({ status: `payment_${paymentStatus}`, note: `Payment marked as ${paymentStatus}`, createdAt: new Date() } as any);
+        await order.save();
+        return order;
+    },
+
+    async addAdminNote(id: string, note: string) {
+        const order = await Order.findById(id);
+        if (!order) throw new AppError(404, 'Order not found');
+
+        order.timeline.push({ status: 'admin_note', note, createdAt: new Date() } as any);
+        await order.save();
+        return order;
+    },
+
     async getOrderStats() {
         const [total, pending, confirmed, processing, shipped, delivered, cancelled] = await Promise.all([
             Order.countDocuments(),

@@ -55,6 +55,8 @@ const orderSchema = new Schema(
             default: 'pending',
         },
         transactionId: { type: String, default: '' },
+        trackingNumber: { type: String, default: '' },
+        carrier: { type: String, default: '' },
 
         note: { type: String, default: '' },
         timeline: { type: [timelineSchema], default: [] },

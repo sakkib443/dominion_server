@@ -4,10 +4,16 @@ import sendResponse from '../../utils/sendResponse';
 import UserService from './user.service';
 
 const UserController = {
-    // GET /api/users (admin)
+    // GET /api/users/admin/all (admin)
     getAllUsers: catchAsync(async (req: Request, res: Response) => {
         const { users, meta } = await UserService.getAllUsers(req.query as Record<string, unknown>);
         sendResponse(res, { statusCode: 200, success: true, message: 'Users fetched successfully', data: users, meta });
+    }),
+
+    // GET /api/users/admin/stats (admin)
+    getAdminStats: catchAsync(async (req: Request, res: Response) => {
+        const stats = await UserService.getAdminStats();
+        sendResponse(res, { statusCode: 200, success: true, message: 'User stats fetched', data: stats });
     }),
 
     // GET /api/users/me
@@ -22,10 +28,22 @@ const UserController = {
         sendResponse(res, { statusCode: 200, success: true, message: 'Profile updated successfully', data: user });
     }),
 
-    // GET /api/users/:id (admin)
+    // GET /api/users/admin/:id (admin)
     getUserById: catchAsync(async (req: Request, res: Response) => {
         const user = await UserService.getUserById(req.params.id);
         sendResponse(res, { statusCode: 200, success: true, message: 'User fetched successfully', data: user });
+    }),
+
+    // PATCH /api/users/admin/:id (admin)
+    adminUpdateUser: catchAsync(async (req: Request, res: Response) => {
+        const user = await UserService.adminUpdateUser(req.params.id, req.body);
+        sendResponse(res, { statusCode: 200, success: true, message: 'User updated successfully', data: user });
+    }),
+
+    // GET /api/users/addresses
+    getMyAddresses: catchAsync(async (req: Request, res: Response) => {
+        const addresses = await UserService.getMyAddresses(req.user!.userId);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Addresses fetched', data: addresses });
     }),
 
     // POST /api/users/addresses
@@ -46,19 +64,32 @@ const UserController = {
         sendResponse(res, { statusCode: 200, success: true, message: 'Address deleted successfully', data: addresses });
     }),
 
-    // POST /api/users/wishlist/:productId
+    // GET /api/users/wishlist
+    getWishlist: catchAsync(async (req: Request, res: Response) => {
+        const wishlist = await UserService.getWishlist(req.user!.userId);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Wishlist fetched', data: wishlist });
+    }),
+
+    // POST /api/users/wishlist/:productId (legacy)
     toggleWishlist: catchAsync(async (req: Request, res: Response) => {
         const result = await UserService.toggleWishlist(req.user!.userId, req.params.productId);
         sendResponse(res, { statusCode: 200, success: true, message: result.added ? 'Added to wishlist' : 'Removed from wishlist', data: result });
     }),
 
-    // PATCH /api/users/:id/status (admin)
+    // POST /api/users/wishlist (from body)
+    toggleWishlistFromBody: catchAsync(async (req: Request, res: Response) => {
+        const { productId } = req.body;
+        const result = await UserService.toggleWishlist(req.user!.userId, productId);
+        sendResponse(res, { statusCode: 200, success: true, message: result.added ? 'Added to wishlist' : 'Removed from wishlist', data: result });
+    }),
+
+    // PATCH /api/users/admin/:id/status (admin)
     updateUserStatus: catchAsync(async (req: Request, res: Response) => {
         const user = await UserService.updateUserStatus(req.params.id, req.body.status);
         sendResponse(res, { statusCode: 200, success: true, message: 'User status updated', data: user });
     }),
 
-    // DELETE /api/users/:id (admin)
+    // DELETE /api/users/admin/:id (admin)
     deleteUser: catchAsync(async (req: Request, res: Response) => {
         await UserService.deleteUser(req.params.id);
         sendResponse(res, { statusCode: 200, success: true, message: 'User deleted successfully' });
