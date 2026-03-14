@@ -8,6 +8,8 @@
         "outDir": "./dist",
         "rootDir": "./src",
         "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "node",
@@ -21,6 +23,7 @@
     ],
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
+        "src/scripts"
     ]
 }

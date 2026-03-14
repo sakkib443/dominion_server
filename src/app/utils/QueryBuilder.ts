@@ -65,7 +65,7 @@ class QueryBuilder<T> {
     // Select specific fields
     fields() {
         const fields = (this.query?.fields as string)?.split(',')?.join(' ') || '-__v';
-        this.modelQuery = this.modelQuery.select(fields);
+        (this.modelQuery as any) = this.modelQuery.select(fields as any);
         return this;
     }
 

@@ -131,7 +131,7 @@ const UserService = {
         const user = await User.findById(userId);
         if (!user) throw new AppError(404, 'User not found');
 
-        const address = user.shippingAddresses.id(addressId);
+        const address = (user.shippingAddresses as any).id(addressId);
         if (!address) throw new AppError(404, 'Address not found');
 
         if (payload.isDefault) {
@@ -153,7 +153,7 @@ const UserService = {
         const user = await User.findById(userId);
         if (!user) throw new AppError(404, 'User not found');
         user.shippingAddresses = user.shippingAddresses.filter(
-            (addr) => addr._id?.toString() !== addressId
+            (addr: any) => addr._id?.toString() !== addressId
         );
         await user.save();
         return user.shippingAddresses;

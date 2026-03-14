@@ -4,9 +4,11 @@
     "description": "Dominion E-Commerce Backend API",
     "main": "index.js",
     "scripts": {
+        "start": "node ./dist/server.js",
         "start:prod": "node ./dist/server.js",
         "start:dev": "ts-node-dev --respawn --transpile-only src/server.ts",
         "build": "tsc",
+        "vercel-build": "tsc",
         "lint": "eslint src --ignore-path .eslintignore --ext .ts",
         "lint:fix": "npx eslint src --fix",
         "prettier:fix": "npx prettier --write src"
