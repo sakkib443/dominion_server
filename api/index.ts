@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import app from '../src/app';
+import { IncomingMessage, ServerResponse } from 'http';
 
 // ── MongoDB Connection (Vercel-optimized with caching) ─────────
 interface CachedConnection {
@@ -19,6 +20,7 @@ async function connectDB() {
 
     if (!cached.promise) {
         const dbUrl = process.env.DATABASE_URL || '';
+        console.log('[Vercel] Connecting to MongoDB...');
         cached.promise = mongoose.connect(dbUrl, {
             bufferCommands: false,
             maxPoolSize: 10,
@@ -29,16 +31,30 @@ async function connectDB() {
 
     try {
         cached.conn = await cached.promise;
+        console.log('[Vercel] MongoDB connected successfully');
     } catch (error) {
         cached.promise = null;
+        console.error('[Vercel] MongoDB connection error:', error);
         throw error;
     }
 
     return cached.conn;
 }
 
-// Connect on first request
-connectDB().catch(console.error);
+// ── Export handler: connect DB first, then delegate to Express ──
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+    try {
+        await connectDB();
+    } catch (error) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({
+            success: false,
+            message: 'Database connection failed',
+            error: error instanceof Error ? error.message : 'Unknown error',
+        }));
+        return;
+    }
+    return app(req, res);
+}
 
-// Export the Express app for Vercel
-export default app;
