@@ -47,7 +47,7 @@ class QueryBuilder<T> {
     // Filter by any field (category, brand, status, etc.)
     filter() {
         const queryObj = { ...this.query };
-        const excludeFields = ['searchTerm', 'sort', 'limit', 'page', 'fields'];
+        const excludeFields = ['searchTerm', 'search', 'sort', 'limit', 'page', 'fields'];
         excludeFields.forEach((el) => delete queryObj[el]);
 
         // Price range filter
