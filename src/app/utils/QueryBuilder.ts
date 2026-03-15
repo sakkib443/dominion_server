@@ -10,15 +10,36 @@ class QueryBuilder<T> {
         this.query = query;
     }
 
-    // Text search (name, description, tags, brand)
+    // Text search with fuzzy matching (handles partial words, typos, multiple terms)
     search(searchableFields: string[]) {
-        const searchTerm = this.query?.searchTerm;
+        const searchTerm = this.query?.searchTerm as string;
         if (searchTerm) {
-            this.modelQuery = this.modelQuery.find({
-                $or: searchableFields.map((field) => ({
-                    [field]: { $regex: searchTerm, $options: 'i' },
-                })) as FilterQuery<T>[],
+            // Split into individual words for better matching
+            const words = searchTerm.trim().split(/\s+/).filter(Boolean);
+
+            const wordConditions = words.map((word) => {
+                // Build a fuzzy regex: allow optional character between each letter for typo tolerance
+                const fuzzyPattern = word
+                    .split('')
+                    .map((char) => char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                    .join('.?');
+
+                const patterns = [
+                    { $regex: word, $options: 'i' },       // exact substring match
+                    { $regex: fuzzyPattern, $options: 'i' }, // fuzzy match (typo tolerant)
+                ];
+
+                return {
+                    $or: searchableFields.flatMap((field) =>
+                        patterns.map((pattern) => ({ [field]: pattern }))
+                    ),
+                };
             });
+
+            // All words must match (AND between words, OR between fields)
+            this.modelQuery = this.modelQuery.find({
+                $and: wordConditions,
+            } as FilterQuery<T>);
         }
         return this;
     }

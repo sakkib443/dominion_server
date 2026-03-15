@@ -6,17 +6,61 @@ import QueryBuilder from '../../utils/QueryBuilder';
 const ProductService = {
     // ── Get all products (public, with full filtering) ──────────────────
     async getAllProducts(query: Record<string, unknown>) {
+        // If searching, also look for matching categories by name
+        let categoryIds: string[] = [];
+        if (query.searchTerm) {
+            const matchingCategories = await Category.find({
+                name: { $regex: query.searchTerm as string, $options: 'i' },
+            }).select('_id');
+            categoryIds = matchingCategories.map((c) => c._id.toString());
+        }
+
+        // Build base query — if we found matching categories, include them
+        let baseFilter: any = { isDeleted: false };
+        if (categoryIds.length > 0 && query.searchTerm) {
+            // Will be merged with search conditions via $and
+            baseFilter = {
+                isDeleted: false,
+                $or: [
+                    { category: { $in: categoryIds } },
+                    // The QueryBuilder.search() will add field-level search conditions
+                    { _searchPlaceholder: true },
+                ],
+            };
+        }
+
         const productQuery = new QueryBuilder(
-            Product.find({ isDeleted: false })
+            Product.find(categoryIds.length > 0 ? { isDeleted: false } : baseFilter)
                 .populate('category', 'name slug')
                 .populate('subcategory', 'name slug'),
             query
         )
-            .search(['name', 'description', 'brand', 'tags'])
+            .search(['name', 'description', 'brand', 'tags', 'colors', 'material', 'aiLabels', 'pattern', 'shortDescription', 'slug'])
             .filter()
             .sort()
             .paginate()
             .fields();
+
+        // If we have matching category IDs, merge them into the query
+        if (categoryIds.length > 0 && query.searchTerm) {
+            const currentFilter = productQuery.modelQuery.getFilter();
+            productQuery.modelQuery = Product.find({
+                isDeleted: false,
+                $or: [
+                    { category: { $in: categoryIds } },
+                    ...(currentFilter.$and || [currentFilter]),
+                ],
+            })
+                .populate('category', 'name slug')
+                .populate('subcategory', 'name slug');
+
+            // Re-apply sort, paginate, fields
+            const sort = (query?.sort as string)?.split(',')?.join(' ') || '-createdAt';
+            const page = Number(query?.page) || 1;
+            const limit = Number(query?.limit) || 10;
+            const skip = (page - 1) * limit;
+            productQuery.modelQuery = productQuery.modelQuery.sort(sort).skip(skip).limit(limit);
+        }
 
         const products = await productQuery.modelQuery;
         const meta = await productQuery.countTotal();
