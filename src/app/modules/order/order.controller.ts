@@ -49,6 +49,14 @@ const OrderController = {
         const stats = await OrderService.getOrderStats();
         sendResponse(res, { statusCode: 200, success: true, message: 'Order stats fetched', data: stats });
     }),
+
+    guestCheckout: catchAsync(async (req: Request, res: Response) => {
+        const result = await OrderService.createGuestOrder(req.body);
+        const message = result.isNewUser
+            ? 'Order placed successfully! An account has been created for you. Your phone number is your password.'
+            : 'Order placed successfully!';
+        sendResponse(res, { statusCode: 201, success: true, message, data: result });
+    }),
 };
 
 export default OrderController;

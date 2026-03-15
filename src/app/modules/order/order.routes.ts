@@ -6,6 +6,9 @@ import { createOrderValidation, updateOrderStatusValidation } from './order.vali
 
 const router = express.Router();
 
+// ── Guest checkout (no auth required) ────────────
+router.post('/guest-checkout', OrderController.guestCheckout);
+
 // ── User routes ──────────────────────────────────
 router.get('/my', authMiddleware, OrderController.getMyOrders);
 router.post('/', authMiddleware, validateRequest(createOrderValidation), OrderController.create);

@@ -109,6 +109,65 @@ const OrderService = {
         return order;
     },
 
+    // ── Guest checkout: auto-create user + place order ────────────────
+    async createGuestOrder(payload: any) {
+        const { shippingAddress, paymentMethod, items, couponCode, note } = payload;
+        const { fullName, email, phone } = shippingAddress;
+
+        if (!email || !phone || !fullName) {
+            throw new AppError(400, 'Name, email, and phone are required for checkout');
+        }
+
+        // Check if user already exists
+        let user = await User.findOne({ email: email.toLowerCase() });
+        let isNewUser = false;
+
+        if (!user) {
+            // Auto-create account: phone number as password
+            const nameParts = fullName.trim().split(' ');
+            const firstName = nameParts[0] || 'Customer';
+            const lastName = nameParts.slice(1).join(' ') || '.';
+
+            user = await User.create({
+                email: email.toLowerCase(),
+                password: phone, // phone number as password
+                firstName,
+                lastName,
+                phone,
+                role: 'user',
+                status: 'active',
+                isEmailVerified: false,
+            });
+            isNewUser = true;
+        }
+
+        // Now create order using the existing createOrder method
+        const order = await this.createOrder(user._id!.toString(), payload);
+
+        // Generate token for auto-login
+        const jwt = require('jsonwebtoken');
+        const appConfig = require('../../config').default;
+        const accessToken = jwt.sign(
+            { userId: user._id!.toString(), email: user.email, role: user.role },
+            appConfig.jwt.access_secret,
+            { expiresIn: appConfig.jwt.access_expires_in }
+        );
+
+        return {
+            order,
+            user: {
+                _id: user._id!.toString(),
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                phone: user.phone,
+            },
+            accessToken,
+            isNewUser,
+        };
+    },
+
     async updateOrderStatus(id: string, status: string, note?: string) {
         const order = await Order.findById(id);
         if (!order) throw new AppError(404, 'Order not found');
