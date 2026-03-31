@@ -25,6 +25,8 @@ const productSchema = new Schema(
         sku: { type: String, unique: true, sparse: true },
         description: { type: String, required: [true, 'Description is required'] },
         shortDescription: { type: String, maxlength: 500, default: '' },
+        tagline: { type: String, maxlength: 200, default: 'Lower price than others but quality higher' },
+        priceType: { type: String, enum: ['fixed', 'negotiable'], default: 'negotiable' },
 
         // ── Pricing ─────────────────────────────────────────────
         price: { type: Number, required: [true, 'Price is required'], min: 0 },

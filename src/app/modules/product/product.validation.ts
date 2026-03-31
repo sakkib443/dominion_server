@@ -5,6 +5,8 @@ export const createProductValidation = z.object({
         name: z.string().min(1, 'Product name is required').max(200),
         description: z.string().min(1, 'Description is required'),
         shortDescription: z.string().max(500).optional(),
+        tagline: z.string().max(200).optional(),
+        priceType: z.enum(['fixed', 'negotiable']).optional(),
         slug: z.string().optional(),
         price: z.number().min(0, 'Price must be positive'),
         originalPrice: z.number().min(0).optional().nullable(),
