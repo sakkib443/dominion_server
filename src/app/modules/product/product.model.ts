@@ -94,6 +94,11 @@ const productSchema = new Schema(
         // ── Warranty ──────────────────────────────────────────────
         warranty: { type: warrantySchema, default: () => ({}) },
 
+        // ── Content Tabs (Product Page) ──────────────────────────
+        deliveryInfo: { type: String, default: '' },
+        paymentInfo: { type: String, default: '' },
+        termsInfo: { type: String, default: '' },
+
         // ── SEO ───────────────────────────────────────────────────
         metaTitle: { type: String, default: '' },
         metaDescription: { type: String, default: '' },

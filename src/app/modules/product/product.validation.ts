@@ -58,6 +58,11 @@ export const createProductValidation = z.object({
             type: z.enum(['manufacturer', 'seller', 'brand', '']).optional(),
         }).optional(),
 
+        // Content Tabs
+        deliveryInfo: z.string().optional(),
+        paymentInfo: z.string().optional(),
+        termsInfo: z.string().optional(),
+
         // SEO
         metaTitle: z.string().optional(),
         metaDescription: z.string().optional(),
