@@ -2,11 +2,15 @@ import express from 'express';
 import ReviewController from './review.controller';
 import { authMiddleware, authorizeRoles } from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
-import { createReviewValidation, updateReviewValidation } from './review.validation';
+import { createReviewValidation, updateReviewValidation, publicCreateReviewValidation } from './review.validation';
 
 const router = express.Router();
 
+// Public routes (no auth)
 router.get('/product/:productId', ReviewController.getProductReviews);
+router.post('/public', validateRequest(publicCreateReviewValidation), ReviewController.publicCreate);
+
+// Auth-protected routes
 router.get('/', authMiddleware, authorizeRoles('admin'), ReviewController.getAll);
 router.post('/', authMiddleware, validateRequest(createReviewValidation), ReviewController.create);
 router.patch('/:id', authMiddleware, validateRequest(updateReviewValidation), ReviewController.update);

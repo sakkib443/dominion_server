@@ -16,6 +16,10 @@ const ReviewController = {
         const review = await ReviewService.createReview(req.user!.userId, req.body);
         sendResponse(res, { statusCode: 201, success: true, message: 'Review submitted', data: review });
     }),
+    publicCreate: catchAsync(async (req: Request, res: Response) => {
+        const review = await ReviewService.publicCreateReview(req.body);
+        sendResponse(res, { statusCode: 201, success: true, message: 'Comment submitted', data: review });
+    }),
     update: catchAsync(async (req: Request, res: Response) => {
         const review = await ReviewService.updateReview(req.params.id, req.user!.userId, req.body);
         sendResponse(res, { statusCode: 200, success: true, message: 'Review updated', data: review });

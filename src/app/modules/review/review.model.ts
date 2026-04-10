@@ -3,7 +3,8 @@ import { Schema, model } from 'mongoose';
 const reviewSchema = new Schema(
     {
         product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-        user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        user: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+        userName: { type: String, maxlength: 50, default: 'Anonymous' },
         rating: { type: Number, required: true, min: 1, max: 5 },
         title: { type: String, maxlength: 100, default: '' },
         comment: { type: String, required: true, maxlength: 1000 },
@@ -15,7 +16,11 @@ const reviewSchema = new Schema(
     { timestamps: true, toJSON: { virtuals: true } }
 );
 
-reviewSchema.index({ product: 1, user: 1 }, { unique: true }); // one review per user per product
+// Only enforce one-review-per-user for logged-in users (user != null)
+reviewSchema.index(
+    { product: 1, user: 1 },
+    { unique: true, partialFilterExpression: { user: { $ne: null } } }
+);
 reviewSchema.index({ product: 1, isApproved: 1 });
 
 // Auto-update product rating after save/delete

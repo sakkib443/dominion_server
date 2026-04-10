@@ -20,6 +20,18 @@ const ReviewService = {
         return await Review.create({ ...payload, user: userId });
     },
 
+    // Public (guest) review — no login required
+    async publicCreateReview(payload: any) {
+        const { product, rating, comment, userName } = payload;
+        return await Review.create({
+            product,
+            rating,
+            comment,
+            userName: userName?.trim() || 'Anonymous',
+            user: null,
+        });
+    },
+
     async updateReview(id: string, userId: string, payload: any) {
         const review = await Review.findOneAndUpdate(
             { _id: id, user: userId },
