@@ -64,6 +64,11 @@ const ProductController = {
         const result = await ProductService.bulkDelete(req.body.ids);
         sendResponse(res, { statusCode: 200, success: true, message: 'Products deleted', data: result });
     }),
+
+    incrementStat: catchAsync(async (req: Request, res: Response) => {
+        const product = await ProductService.incrementStat(req.params.id, req.body.field);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Stat updated', data: product });
+    }),
 };
 
 export default ProductController;

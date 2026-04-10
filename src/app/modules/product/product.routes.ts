@@ -10,6 +10,7 @@ const router = express.Router();
 router.get('/', ProductController.getAll);
 router.get('/featured', ProductController.getFeatured);
 router.get('/slug/:slug', ProductController.getBySlug);
+router.patch('/:id/stat', ProductController.incrementStat);  // Public: increment like/share/view
 router.get('/:id/related/:categoryId', ProductController.getRelated);
 router.get('/:id', ProductController.getById);
 

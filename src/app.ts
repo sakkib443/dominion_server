@@ -18,6 +18,7 @@ import { SearchRoutes } from './app/modules/search/search.routes';
 import { PaymentRoutes } from './app/modules/payment/payment.routes';
 import { ShippingRoutes } from './app/modules/shipping/shipping.routes';
 import { AnalyticsRoutes } from './app/modules/analytics/analytics.routes';
+import { InquiryRoutes } from './app/modules/inquiry/inquiry.routes';
 
 const app: Application = express();
 
@@ -74,6 +75,7 @@ app.use('/api/search', SearchRoutes);
 app.use('/api/payments', PaymentRoutes);
 app.use('/api/shipping', ShippingRoutes);
 app.use('/api/analytics', AnalyticsRoutes);
+app.use('/api/inquiries', InquiryRoutes);
 
 // ── Error Handlers ────────────────────────────────────────────────
 app.use(notFoundHandler);

@@ -180,6 +180,21 @@ const ProductService = {
             .sort({ rating: -1 })
             .limit(limit);
     },
+
+    // ── Increment stat (like, share, view, comment) ─────────────────────
+    async incrementStat(id: string, field: string) {
+        const allowedFields = ['likeCount', 'shareCount', 'viewCount', 'commentCount'];
+        if (!allowedFields.includes(field)) {
+            throw new AppError(400, `Invalid stat field: ${field}`);
+        }
+        const product = await Product.findByIdAndUpdate(
+            id,
+            { $inc: { [field]: 1 } },
+            { new: true }
+        );
+        if (!product) throw new AppError(404, 'Product not found');
+        return product;
+    },
 };
 
 export default ProductService;
