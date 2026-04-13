@@ -8,9 +8,10 @@ const orderItemValidation = z.object({
 const shippingAddressValidation = z.object({
     fullName: z.string().min(1, 'Full name required'),
     phone: z.string().min(1, 'Phone required'),
+    email: z.string().optional(),
     address: z.string().min(1, 'Address required'),
     area: z.string().optional(),
-    city: z.string().min(1, 'City required'),
+    city: z.string().optional(),
     postalCode: z.string().optional(),
 });
 
