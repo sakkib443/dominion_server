@@ -31,11 +31,10 @@ const ProductService = {
 
         const productQuery = new QueryBuilder(
             Product.find(categoryIds.length > 0 ? { isDeleted: false } : baseFilter)
-                .populate('category', 'name slug')
-                .populate('subcategory', 'name slug'),
+                .populate('category', 'name slug'),
             query
         )
-            .search(['name', 'description', 'brand', 'tags', 'colors', 'material', 'aiLabels', 'pattern', 'shortDescription', 'slug'])
+            .search(['name', 'description', 'tags', 'colors', 'aiLabels', 'slug'])
             .filter()
             .sort()
             .paginate()
@@ -51,8 +50,7 @@ const ProductService = {
                     ...(currentFilter.$and || [currentFilter]),
                 ],
             })
-                .populate('category', 'name slug')
-                .populate('subcategory', 'name slug');
+                .populate('category', 'name slug');
 
             // Re-apply sort, paginate, fields
             const sort = (query?.sort as string)?.split(',')?.join(' ') || '-createdAt';
@@ -70,8 +68,7 @@ const ProductService = {
     // ── Get single product ──────────────────────────────────────────────
     async getProductById(id: string) {
         const product = await Product.findOne({ _id: id, isDeleted: false })
-            .populate('category', 'name slug')
-            .populate('subcategory', 'name slug');
+            .populate('category', 'name slug');
         if (!product) throw new AppError(404, 'Product not found');
 
         // Increment view count
@@ -82,8 +79,7 @@ const ProductService = {
     // ── Get product by slug ─────────────────────────────────────────────
     async getProductBySlug(slug: string) {
         const product = await Product.findOne({ slug, isDeleted: false })
-            .populate('category', 'name slug')
-            .populate('subcategory', 'name slug');
+            .populate('category', 'name slug');
         if (!product) throw new AppError(404, 'Product not found');
         await Product.findByIdAndUpdate(product._id, { $inc: { viewCount: 1 } });
         return product;
@@ -91,14 +87,13 @@ const ProductService = {
 
     // ── Admin stats ─────────────────────────────────────────────────────
     async getProductStats() {
-        const [total, active, draft, outOfStock, featured] = await Promise.all([
+        const [total, active, draft, outOfStock] = await Promise.all([
             Product.countDocuments({ isDeleted: false }),
             Product.countDocuments({ isDeleted: false, status: 'active' }),
             Product.countDocuments({ isDeleted: false, status: 'draft' }),
             Product.countDocuments({ isDeleted: false, status: 'out-of-stock' }),
-            Product.countDocuments({ isDeleted: false, isFeatured: true }),
         ]);
-        return { total, active, draft, outOfStock, featured };
+        return { total, active, draft, outOfStock };
     },
 
     // ── Create product ──────────────────────────────────────────────────
@@ -113,6 +108,8 @@ const ProductService = {
 
     // ── Update product ──────────────────────────────────────────────────
     async updateProduct(id: string, payload: any) {
+        // Remove discount from payload — it's auto-calculated in pre-save
+        delete payload.discount;
         const product = await Product.findOneAndUpdate(
             { _id: id, isDeleted: false },
             payload,
@@ -147,22 +144,12 @@ const ProductService = {
         return result;
     },
 
-    // ── Update stock ────────────────────────────────────────────────────
-    async updateStock(id: string, quantity: number) {
-        const product = await Product.findById(id);
-        if (!product) throw new AppError(404, 'Product not found');
+    // ── Update stock (no longer needed — stock field removed) ───────────
+    // Kept for API compatibility; status can still be set to out-of-stock manually
 
-        product.stock = quantity;
-        if (quantity === 0) product.status = 'out-of-stock';
-        else if (product.status === 'out-of-stock') product.status = 'active';
-
-        await product.save();
-        return product;
-    },
-
-    // ── Featured products ───────────────────────────────────────────────
+    // ── Featured products (top selling active products) ─────────────────
     async getFeaturedProducts(limit = 8) {
-        return await Product.find({ isDeleted: false, isFeatured: true, status: 'active' })
+        return await Product.find({ isDeleted: false, status: 'active' })
             .populate('category', 'name slug')
             .sort({ totalSold: -1 })
             .limit(limit);
