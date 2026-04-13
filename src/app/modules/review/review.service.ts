@@ -23,13 +23,26 @@ const ReviewService = {
     // Public (guest) review — no login required
     async publicCreateReview(payload: any) {
         const { product, rating, comment, userName } = payload;
-        return await Review.create({
+        const review = await Review.create({
             product,
             rating,
             comment,
             userName: userName?.trim() || 'Anonymous',
             user: null,
         });
+
+        // Update product stats: increment commentCount, reviewCount, recalculate rating
+        const { Product } = require('../product/product.model');
+        const allReviews = await Review.find({ product });
+        const totalRating = allReviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0);
+        const avgRating = allReviews.length > 0 ? totalRating / allReviews.length : 0;
+        await Product.findByIdAndUpdate(product, {
+            $inc: { commentCount: 1 },
+            reviewCount: allReviews.length,
+            rating: Math.round(avgRating * 10) / 10,
+        });
+
+        return review;
     },
 
     async updateReview(id: string, userId: string, payload: any) {
