@@ -111,7 +111,7 @@ const OrderService = {
 
     // ── Guest checkout: auto-create user + place order ────────────────
     async createGuestOrder(payload: any) {
-        const { shippingAddress, paymentMethod, items, couponCode, note } = payload;
+        const { shippingAddress, paymentMethod, items, couponCode, note, password } = payload;
         const { fullName, email, phone } = shippingAddress;
 
         if (!phone || !fullName) {
@@ -133,7 +133,7 @@ const OrderService = {
 
             user = await User.create({
                 email: guestEmail.toLowerCase(),
-                password: phone,
+                password: password || phone,   // use provided password or phone as fallback
                 firstName,
                 lastName,
                 phone,
