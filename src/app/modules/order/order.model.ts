@@ -18,9 +18,10 @@ const timelineSchema = new Schema({
 const shippingAddressSchema = new Schema({
     fullName: { type: String, required: true },
     phone: { type: String, required: true },
+    email: { type: String, default: '' },
     address: { type: String, required: true },
     area: { type: String, default: '' },
-    city: { type: String, required: true },
+    city: { type: String, default: '' },
     postalCode: { type: String, default: '' },
 }, { _id: false });
 

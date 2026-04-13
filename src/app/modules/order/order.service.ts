@@ -114,12 +114,15 @@ const OrderService = {
         const { shippingAddress, paymentMethod, items, couponCode, note } = payload;
         const { fullName, email, phone } = shippingAddress;
 
-        if (!email || !phone || !fullName) {
-            throw new AppError(400, 'Name, email, and phone are required for checkout');
+        if (!phone || !fullName) {
+            throw new AppError(400, 'Full name and phone number are required for checkout');
         }
 
+        // Auto-generate guest email from phone if not provided
+        const guestEmail = email || `${phone.replace(/\s+/g, '')}@guest.dominion.com`;
+
         // Check if user already exists
-        let user = await User.findOne({ email: email.toLowerCase() });
+        let user = await User.findOne({ $or: [{ email: guestEmail.toLowerCase() }, { phone }] });
         let isNewUser = false;
 
         if (!user) {
@@ -129,8 +132,8 @@ const OrderService = {
             const lastName = nameParts.slice(1).join(' ') || '.';
 
             user = await User.create({
-                email: email.toLowerCase(),
-                password: phone, // phone number as password
+                email: guestEmail.toLowerCase(),
+                password: phone,
                 firstName,
                 lastName,
                 phone,
