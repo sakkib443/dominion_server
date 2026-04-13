@@ -17,11 +17,25 @@ const AuthService = {
         return { accessToken, refreshToken };
     },
 
-    async register(payload: TRegisterInput): Promise<IAuthResponse> {
-        const isExists = await User.isUserExists(payload.email);
-        if (isExists) throw new AppError(400, 'Email already registered. Please login.');
+    async register(payload: any): Promise<IAuthResponse> {
+        const { firstName, lastName, email, phone, password, location } = payload;
 
-        const user = await User.create({ ...payload, status: 'active', isEmailVerified: false });
+        // Auto-generate guest email if only phone provided
+        const userEmail = email || `${phone?.replace(/\s+/g, '')}@guest.dominion.com`;
+
+        const isExists = await User.isUserExists(userEmail);
+        if (isExists) throw new AppError(400, 'Account already exists. Please login.');
+
+        const user = await User.create({
+            firstName,
+            lastName: lastName || '.',
+            email: userEmail,
+            phone: phone || '',
+            password,
+            location: location || '',
+            status: 'active',
+            isEmailVerified: false,
+        });
 
         const jwtPayload: IJwtPayload = { userId: user._id!.toString(), email: user.email, role: user.role };
         const tokens = this.generateTokens(jwtPayload);
@@ -32,16 +46,23 @@ const AuthService = {
         };
     },
 
-    async login(payload: TLoginInput): Promise<IAuthResponse> {
-        const { email, password } = payload;
-        const user = await User.findByEmail(email);
+    async login(payload: any): Promise<IAuthResponse> {
+        const { email, phone, password } = payload;
 
-        if (!user) throw new AppError(401, 'Invalid email or password');
+        // Find user by email OR phone
+        let user;
+        if (email) {
+            user = await User.findByEmail(email);
+        } else if (phone) {
+            user = await User.findOne({ phone: phone.trim() }).select('+password');
+        }
+
+        if (!user) throw new AppError(401, 'Invalid credentials. No account found.');
         if (user.isDeleted) throw new AppError(401, 'This account has been deleted');
         if (user.status === 'blocked') throw new AppError(403, 'Your account has been blocked. Contact support.');
 
         const isPasswordCorrect = await user.comparePassword(password);
-        if (!isPasswordCorrect) throw new AppError(401, 'Invalid email or password');
+        if (!isPasswordCorrect) throw new AppError(401, 'Incorrect password.');
 
         const jwtPayload: IJwtPayload = { userId: user._id!.toString(), email: user.email, role: user.role };
         const tokens = this.generateTokens(jwtPayload);

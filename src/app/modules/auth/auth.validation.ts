@@ -3,17 +3,25 @@ import { z } from 'zod';
 export const registerValidation = z.object({
     body: z.object({
         firstName: z.string().min(1, 'First name is required').max(50),
-        lastName: z.string().min(1, 'Last name is required').max(50),
-        email: z.string().email('Invalid email address'),
+        lastName: z.string().max(50).optional().default(''),
+        email: z.string().email('Invalid email address').optional(),
+        phone: z.string().min(6, 'Invalid phone number').optional(),
         password: z.string().min(6, 'Password must be at least 6 characters'),
-        phone: z.string().optional(),
+        location: z.string().optional(),
+    }).refine(data => data.email || data.phone, {
+        message: 'Email or phone number is required',
+        path: ['email'],
     }),
 });
 
 export const loginValidation = z.object({
     body: z.object({
-        email: z.string().email('Invalid email address'),
+        email: z.string().email('Invalid email address').optional(),
+        phone: z.string().min(6, 'Invalid phone number').optional(),
         password: z.string().min(1, 'Password is required'),
+    }).refine(data => data.email || data.phone, {
+        message: 'Email or phone number is required',
+        path: ['email'],
     }),
 });
 
