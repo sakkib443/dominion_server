@@ -1,5 +1,14 @@
 import { Schema, model } from 'mongoose';
 
+const replySchema = new Schema(
+    {
+        text: { type: String, required: true, maxlength: 500 },
+        userName: { type: String, maxlength: 50, default: 'Anonymous' },
+        likes: { type: Number, default: 0 },
+    },
+    { timestamps: true }
+);
+
 const reviewSchema = new Schema(
     {
         product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -12,6 +21,8 @@ const reviewSchema = new Schema(
         isVerifiedPurchase: { type: Boolean, default: false },
         isApproved: { type: Boolean, default: true },
         helpfulVotes: { type: Number, default: 0 },
+        likes: { type: Number, default: 0 },
+        replies: { type: [replySchema], default: [] },
     },
     { timestamps: true, toJSON: { virtuals: true } }
 );

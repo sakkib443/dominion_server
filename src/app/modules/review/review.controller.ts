@@ -28,6 +28,18 @@ const ReviewController = {
         await ReviewService.deleteReview(req.params.id, req.user!.userId, req.user!.role === 'admin');
         sendResponse(res, { statusCode: 200, success: true, message: 'Review deleted' });
     }),
+    likeReview: catchAsync(async (req: Request, res: Response) => {
+        const review = await ReviewService.likeReview(req.params.reviewId);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Review liked', data: review });
+    }),
+    replyToReview: catchAsync(async (req: Request, res: Response) => {
+        const review = await ReviewService.replyToReview(req.params.reviewId, req.body);
+        sendResponse(res, { statusCode: 201, success: true, message: 'Reply added', data: review });
+    }),
+    likeReply: catchAsync(async (req: Request, res: Response) => {
+        const review = await ReviewService.likeReply(req.params.reviewId, req.params.replyId);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Reply liked', data: review });
+    }),
 };
 
 export default ReviewController;

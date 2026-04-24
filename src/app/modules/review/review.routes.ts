@@ -9,6 +9,9 @@ const router = express.Router();
 // Public routes (no auth)
 router.get('/product/:productId', ReviewController.getProductReviews);
 router.post('/public', validateRequest(publicCreateReviewValidation), ReviewController.publicCreate);
+router.patch('/:reviewId/like', ReviewController.likeReview);
+router.post('/:reviewId/reply', ReviewController.replyToReview);
+router.patch('/:reviewId/replies/:replyId/like', ReviewController.likeReply);
 
 // Auth-protected routes
 router.get('/', authMiddleware, authorizeRoles('admin'), ReviewController.getAll);
