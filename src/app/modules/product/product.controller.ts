@@ -50,11 +50,6 @@ const ProductController = {
         sendResponse(res, { statusCode: 200, success: true, message: 'Product deleted' });
     }),
 
-    updateStock: catchAsync(async (req: Request, res: Response) => {
-        const product = await ProductService.updateStock(req.params.id, req.body.quantity);
-        sendResponse(res, { statusCode: 200, success: true, message: 'Stock updated', data: product });
-    }),
-
     bulkUpdateStatus: catchAsync(async (req: Request, res: Response) => {
         const result = await ProductService.bulkUpdateStatus(req.body.ids, req.body.status);
         sendResponse(res, { statusCode: 200, success: true, message: 'Products status updated', data: result });

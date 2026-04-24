@@ -21,6 +21,5 @@ router.patch('/admin/bulk-status', authMiddleware, authorizeRoles('admin'), vali
 router.delete('/admin/bulk-delete', authMiddleware, authorizeRoles('admin'), validateRequest(bulkDeleteValidation), ProductController.bulkDelete);
 router.patch('/:id', authMiddleware, authorizeRoles('admin'), validateRequest(updateProductValidation), ProductController.update);
 router.delete('/:id', authMiddleware, authorizeRoles('admin'), ProductController.delete);
-router.patch('/:id/stock', authMiddleware, authorizeRoles('admin'), ProductController.updateStock);
 
 export const ProductRoutes = router;
