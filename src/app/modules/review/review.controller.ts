@@ -40,6 +40,10 @@ const ReviewController = {
         const review = await ReviewService.likeReply(req.params.reviewId, req.params.replyId);
         sendResponse(res, { statusCode: 200, success: true, message: 'Reply liked', data: review });
     }),
+    resyncProductStats: catchAsync(async (_req: Request, res: Response) => {
+        const result = await ReviewService.resyncProductStats();
+        sendResponse(res, { statusCode: 200, success: true, message: 'Product stats resynced', data: result });
+    }),
 };
 
 export default ReviewController;

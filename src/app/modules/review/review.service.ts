@@ -20,29 +20,17 @@ const ReviewService = {
         return await Review.create({ ...payload, user: userId });
     },
 
-    // Public (guest) review — no login required
+    // Public (guest) review — no login required. Post-save hook on Review model
+    // keeps product.reviewCount / commentCount / rating in sync.
     async publicCreateReview(payload: any) {
         const { product, rating, comment, userName } = payload;
-        const review = await Review.create({
+        return await Review.create({
             product,
             rating,
             comment,
             userName: userName?.trim() || 'Anonymous',
             user: null,
         });
-
-        // Update product stats: increment commentCount, reviewCount, recalculate rating
-        const { Product } = require('../product/product.model');
-        const allReviews = await Review.find({ product });
-        const totalRating = allReviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0);
-        const avgRating = allReviews.length > 0 ? totalRating / allReviews.length : 0;
-        await Product.findByIdAndUpdate(product, {
-            $inc: { commentCount: 1 },
-            reviewCount: allReviews.length,
-            rating: Math.round(avgRating * 10) / 10,
-        });
-
-        return review;
     },
 
     async updateReview(id: string, userId: string, payload: any) {
@@ -114,6 +102,43 @@ const ReviewService = {
         );
         if (!review) throw new AppError(404, 'Reply not found');
         return review;
+    },
+
+    // Admin: recompute reviewCount / commentCount / rating for every product — fixes drift from legacy data
+    async resyncProductStats() {
+        const { Product } = require('../product/product.model');
+        const aggregated = await Review.aggregate([
+            { $match: { isApproved: true } },
+            {
+                $group: {
+                    _id: '$product',
+                    count: { $sum: 1 },
+                    avgRating: { $avg: '$rating' },
+                },
+            },
+        ]);
+
+        const statsByProduct = new Map<string, { count: number; rating: number }>();
+        for (const row of aggregated) {
+            statsByProduct.set(String(row._id), {
+                count: row.count,
+                rating: Math.round(row.avgRating * 10) / 10,
+            });
+        }
+
+        const allProducts = await Product.find({}, '_id').lean();
+        let updated = 0;
+        for (const p of allProducts) {
+            const s = statsByProduct.get(String(p._id)) || { count: 0, rating: 0 };
+            await Product.findByIdAndUpdate(p._id, {
+                reviewCount: s.count,
+                commentCount: s.count,
+                rating: s.rating,
+            });
+            updated++;
+        }
+
+        return { scanned: allProducts.length, updated };
     },
 };
 

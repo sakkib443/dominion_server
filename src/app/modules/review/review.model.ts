@@ -34,19 +34,20 @@ reviewSchema.index(
 );
 reviewSchema.index({ product: 1, isApproved: 1 });
 
-// Auto-update product rating after save/delete
+// Auto-update product rating + review/comment count after save/delete — keeps both fields in sync
 reviewSchema.post('save', async function () {
     const Product = (await import('../product/product.model')).Product;
     const stats = await (this.constructor as any).aggregate([
         { $match: { product: this.product, isApproved: true } },
         { $group: { _id: '$product', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } },
     ]);
-    if (stats.length > 0) {
-        await Product.findByIdAndUpdate(this.product, {
-            rating: Math.round(stats[0].avgRating * 10) / 10,
-            reviewCount: stats[0].count,
-        });
-    }
+    const count = stats.length > 0 ? stats[0].count : 0;
+    const rating = stats.length > 0 ? Math.round(stats[0].avgRating * 10) / 10 : 0;
+    await Product.findByIdAndUpdate(this.product, {
+        rating,
+        reviewCount: count,
+        commentCount: count,
+    });
 });
 
 export const Review = model('Review', reviewSchema);

@@ -15,6 +15,7 @@ router.patch('/:reviewId/replies/:replyId/like', ReviewController.likeReply);
 
 // Auth-protected routes
 router.get('/', authMiddleware, authorizeRoles('admin'), ReviewController.getAll);
+router.post('/admin/resync-product-stats', authMiddleware, authorizeRoles('admin'), ReviewController.resyncProductStats);
 router.post('/', authMiddleware, validateRequest(createReviewValidation), ReviewController.create);
 router.patch('/:id', authMiddleware, validateRequest(updateReviewValidation), ReviewController.update);
 router.delete('/:id', authMiddleware, ReviewController.delete);
