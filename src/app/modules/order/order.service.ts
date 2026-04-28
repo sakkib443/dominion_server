@@ -4,6 +4,7 @@ import { User } from '../user/user.model';
 import { Coupon } from '../coupon/coupon.model';
 import AppError from '../../utils/AppError';
 import QueryBuilder from '../../utils/QueryBuilder';
+import { notifyOrderToWhatsApp } from '../../utils/whatsappNotify';
 
 const OrderService = {
     async getAllOrders(query: Record<string, unknown>) {
@@ -61,6 +62,8 @@ const OrderService = {
                 price: product.price,
                 quantity: item.quantity,
                 total: itemTotal,
+                color: item.color || '',
+                size: item.size || '',
             });
         }
 
@@ -105,6 +108,18 @@ const OrderService = {
 
         // Update user stats
         await User.findByIdAndUpdate(userId, { $inc: { totalOrders: 1, totalSpent: total } });
+
+        // Send WhatsApp notification to admin (fire & forget)
+        const user = await User.findById(userId);
+        notifyOrderToWhatsApp({
+            orderNumber: order.orderId || order._id.toString(),
+            customerName: shippingAddress.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+            customerPhone: shippingAddress.phone || user?.phone || '',
+            address: shippingAddress.address || '',
+            items: orderItems.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, color: i.color, size: i.size })),
+            total,
+            note: note || '',
+        }).catch(() => {}); // never block order flow
 
         return order;
     },

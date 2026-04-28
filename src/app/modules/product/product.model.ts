@@ -8,6 +8,7 @@ const variantSchema = new Schema(
         color:         { type: String, default: '' },       // e.g. "Red"
         colorHex:      { type: String, default: '' },       // e.g. "#FF0000"
         size:          { type: String, default: '' },       // e.g. "S", "M", "XL", "1kg"
+        description:   { type: String, default: '' },       // variant-specific description (defaults to product description)
         price:         { type: Number, required: true, min: 0 },
         originalPrice: { type: Number, default: null },
         discount:      { type: Number, default: 0, min: 0, max: 100 }, // auto-calculated

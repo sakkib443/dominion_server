@@ -1,8 +1,22 @@
 import { Inquiry } from './inquiry.model';
+import { Product } from '../product/product.model';
+import { notifyInquiryToWhatsApp } from '../../utils/whatsappNotify';
 
 const InquiryService = {
     create: async (data: any) => {
         const inquiry = await Inquiry.create(data);
+
+        // Send WhatsApp notification to admin (fire & forget)
+        const product = await Product.findById(data.product).select('name');
+        notifyInquiryToWhatsApp({
+            customerName: data.name || '',
+            customerPhone: data.phone || '',
+            productName: product?.name || 'Unknown Product',
+            message: data.message || '',
+            color: data.color || '',
+            size: data.size || '',
+        }).catch(() => {}); // never block inquiry flow
+
         return inquiry;
     },
 

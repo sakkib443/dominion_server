@@ -7,6 +7,8 @@ const orderItemSchema = new Schema({
     price: { type: Number, required: true },
     quantity: { type: Number, required: true, min: 1 },
     total: { type: Number, required: true },
+    color: { type: String, default: '' },
+    size: { type: String, default: '' },
 }, { _id: true });
 
 const timelineSchema = new Schema({

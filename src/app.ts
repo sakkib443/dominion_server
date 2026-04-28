@@ -20,6 +20,7 @@ import { ShippingRoutes } from './app/modules/shipping/shipping.routes';
 import { AnalyticsRoutes } from './app/modules/analytics/analytics.routes';
 import { InquiryRoutes } from './app/modules/inquiry/inquiry.routes';
 import { UploadRoutes } from './app/modules/upload/upload.routes';
+import { SiteContentRoutes } from './app/modules/siteContent/siteContent.routes';
 
 const app: Application = express();
 
@@ -78,6 +79,7 @@ app.use('/api/shipping', ShippingRoutes);
 app.use('/api/analytics', AnalyticsRoutes);
 app.use('/api/inquiries', InquiryRoutes);
 app.use('/api/upload', UploadRoutes);
+app.use('/api/site-content', SiteContentRoutes);
 
 // ── Error Handlers ────────────────────────────────────────────────
 app.use(notFoundHandler);
