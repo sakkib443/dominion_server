@@ -29,6 +29,7 @@ const productSchema = new Schema(
         description: { type: String, required: [true, 'Description is required'] },
         tagline:     { type: String, maxlength: 200, default: 'Lower price than others but quality higher' },
         priceType:   { type: String, enum: ['fixed', 'negotiable'], default: 'negotiable' },
+        productType: { type: String, enum: ['simple', 'variable', 'multi-color'], default: 'simple' },
 
         // ── Pricing ─────────────────────────────────────────────
         price:         { type: Number, required: [true, 'Price is required'], min: 0 },
