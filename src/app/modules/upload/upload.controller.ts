@@ -2,6 +2,13 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 
+// Build a public URL from the uploaded file's filename.
+// Uses PUBLIC_BASE_URL env var if set, else falls back to request's host.
+const buildUrl = (req: Request, filename: string) => {
+    const base = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    return `${base.replace(/\/$/, '')}/uploads/${filename}`;
+};
+
 // POST /api/upload/image   — single image
 // POST /api/upload/images  — multiple images (max 10)
 
@@ -11,7 +18,7 @@ export const uploadController = {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
-        const url = (req.file as any).path; // Cloudinary returns 'path' as the secure URL
+        const url = buildUrl(req, req.file.filename);
         sendResponse(res, {
             statusCode: 200,
             success: true,
@@ -26,7 +33,7 @@ export const uploadController = {
         if (!files || files.length === 0) {
             return res.status(400).json({ success: false, message: 'No files uploaded' });
         }
-        const urls = files.map((f: any) => f.path);
+        const urls = files.map((f) => buildUrl(req, f.filename));
         sendResponse(res, {
             statusCode: 200,
             success: true,

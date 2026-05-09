@@ -1,5 +1,5 @@
 import express from 'express';
-import { upload } from '../../utils/cloudinary';
+import { upload } from '../../utils/imageUpload';
 import { uploadController } from './upload.controller';
 import { authMiddleware, authorizeRoles } from '../../middlewares/auth';
 
