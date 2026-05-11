@@ -39,6 +39,21 @@ app.use('/uploads', express.static(UPLOAD_DIR, {
     immutable: true,
 }));
 
+// ── Forced Download: serve any uploaded file with Content-Disposition: attachment ──
+import path from 'path';
+import fs from 'fs';
+app.get('/uploads/download/:filename', (req: Request, res: Response) => {
+    const filename = req.params.filename;
+    // Sanitize — prevent path traversal
+    const safeName = path.basename(filename);
+    const filePath = path.join(UPLOAD_DIR, safeName);
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ success: false, message: 'File not found' });
+    }
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+    res.sendFile(filePath);
+});
+
 // ── CORS ─────────────────────────────────────────────────────────
 const allowedOrigins = [
     config.frontend_url,

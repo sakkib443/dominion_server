@@ -48,8 +48,11 @@ export const uploadController = {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
-        const url = buildUrl(req, req.file.filename);
         const isPdf = req.file.mimetype === 'application/pdf';
+        // PDFs use /uploads/download/:filename so browser forces download (not inline view)
+        const url = isPdf
+            ? buildUrl(req, `download/${req.file.filename}`)
+            : buildUrl(req, req.file.filename);
         sendResponse(res, {
             statusCode: 200,
             success: true,
