@@ -5,7 +5,7 @@ export const createProductValidation = z.object({
         name:          z.string().min(1, 'Product name is required').max(200),
         description:   z.string().min(1, 'Description is required'),
         tagline:       z.string().max(200).optional(),
-        priceType:     z.enum(['fixed', 'negotiable']).optional(),
+        priceType:     z.enum(['fixed', 'negotiable', 'none']).optional(),
         slug:          z.string().optional(),
 
         // Pricing — discount is auto-calculated, no need to send it
@@ -53,6 +53,15 @@ export const createProductValidation = z.object({
         deliveryInfo: z.string().optional(),
         paymentInfo:  z.string().optional(),
         termsInfo:    z.string().optional(),
+
+        // Attached Files
+        attachedFiles: z.array(
+            z.object({
+                name:     z.string().min(1),
+                url:      z.string().min(1),
+                fileType: z.enum(['image', 'pdf']).optional(),
+            })
+        ).optional(),
     }),
 });
 

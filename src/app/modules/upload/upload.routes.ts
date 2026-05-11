@@ -1,5 +1,5 @@
 import express from 'express';
-import { upload } from '../../utils/imageUpload';
+import { upload, uploadFile } from '../../utils/imageUpload';
 import { uploadController } from './upload.controller';
 import { authMiddleware, authorizeRoles } from '../../middlewares/auth';
 
@@ -21,6 +21,15 @@ router.post(
     authorizeRoles('admin'),
     upload.array('images', 10),
     uploadController.uploadMultiple,
+);
+
+// POST /api/upload/file — single image or PDF (for attached files)
+router.post(
+    '/file',
+    authMiddleware,
+    authorizeRoles('admin'),
+    uploadFile.single('file'),
+    uploadController.uploadFileSingle,
 );
 
 export const UploadRoutes = router;

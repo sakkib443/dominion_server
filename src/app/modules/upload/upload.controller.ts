@@ -11,6 +11,7 @@ const buildUrl = (req: Request, filename: string) => {
 
 // POST /api/upload/image   — single image
 // POST /api/upload/images  — multiple images (max 10)
+// POST /api/upload/file    — single image or PDF (for attached files)
 
 export const uploadController = {
     // ── Single image ──────────────────────────────────────────
@@ -39,6 +40,21 @@ export const uploadController = {
             success: true,
             message: `${urls.length} image(s) uploaded successfully`,
             data: { urls },
+        });
+    }),
+
+    // ── Single file (image or PDF) — for attached files ───────
+    uploadFileSingle: catchAsync(async (req: Request, res: Response) => {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+        const url = buildUrl(req, req.file.filename);
+        const isPdf = req.file.mimetype === 'application/pdf';
+        sendResponse(res, {
+            statusCode: 200,
+            success: true,
+            message: 'File uploaded successfully',
+            data: { url, type: isPdf ? 'pdf' : 'image' },
         });
     }),
 };

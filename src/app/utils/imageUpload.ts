@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     },
 });
 
-// ── Multer upload — up to 10 files, 10MB each ────────────────
+// ── Multer upload — images only, up to 10 files, 10MB each ──
 export const upload = multer({
     storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
@@ -30,6 +30,23 @@ export const upload = multer({
             cb(null, true);
         } else {
             cb(new Error('Only image files are allowed (jpg, png, webp, gif, avif)'));
+        }
+    },
+});
+
+// ── File upload — images + PDF, up to 20MB (for attached files) ──
+export const uploadFile = multer({
+    storage,
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+    fileFilter: (_req, file, cb) => {
+        const allowed = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
+            'application/pdf',
+        ];
+        if (allowed.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image or PDF files are allowed'));
         }
     },
 });

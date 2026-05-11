@@ -28,7 +28,7 @@ const productSchema = new Schema(
         sku:         { type: String, unique: true, sparse: true },
         description: { type: String, required: [true, 'Description is required'] },
         tagline:     { type: String, maxlength: 200, default: 'Lower price than others but quality higher' },
-        priceType:   { type: String, enum: ['fixed', 'negotiable'], default: 'negotiable' },
+        priceType:   { type: String, enum: ['fixed', 'negotiable', 'none'], default: 'negotiable' },
         productType: { type: String, enum: ['simple', 'variable', 'multi-color'], default: 'simple' },
 
         // ── Pricing ─────────────────────────────────────────────
@@ -74,6 +74,15 @@ const productSchema = new Schema(
         deliveryInfo: { type: String, default: '' },
         paymentInfo:  { type: String, default: '' },
         termsInfo:    { type: String, default: '' },
+
+        // ── Attached Files (downloadable from product page) ──────
+        attachedFiles: [
+            {
+                name:     { type: String, required: true },        // e.g. "Technical Datasheet"
+                url:      { type: String, required: true },        // uploaded file URL
+                fileType: { type: String, default: 'image' },     // 'image' | 'pdf'
+            },
+        ],
 
         // ── Stats ─────────────────────────────────────────────────
         rating:        { type: Number, default: 0, min: 0, max: 5 },
